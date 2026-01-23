@@ -74,6 +74,7 @@
             color: white;
             font-weight: bold;
             font-size: 18px;
+            flex-shrink: 0;
         }
 
         .profile img {
@@ -108,10 +109,24 @@
             width: 100%;
             max-width: 100%;
             height: auto;
+            min-height: 200px;
             object-fit: cover;
             border-radius: 12px;
             margin: 15px 0;
             box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+            background: #f0f0f0;
+            display: block;
+        }
+
+        .image-error {
+            background: #ffe6e6;
+            border: 2px dashed #ff4444;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #ff4444;
+            font-weight: 600;
+            min-height: 200px;
         }
 
         .desc {
@@ -283,6 +298,13 @@
             box-shadow: 0 6px 16px rgba(127, 140, 141, 0.4);
         }
 
+        .loading {
+            text-align: center;
+            color: white;
+            padding: 40px;
+            font-size: 18px;
+        }
+
         @media (max-width: 768px) {
             .feed {
                 padding: 15px;
@@ -296,11 +318,50 @@
 </head>
 <body>
     <div class="header">🖼️ Incident Photos</div>
-    <div class="feed" id="feed"></div>
+    <div class="feed" id="feed">
+        <div class="loading">Loading photos...</div>
+    </div>
     <button class="back-btn" onclick="window.location='/dashboard'">← Back to Dashboard</button>
 
     <script>
         const place = localStorage.getItem("placeName");
+
+        // Function to normalize image URL
+        function normalizeImageUrl(imageUrl) {
+            if (!imageUrl) return '';
+            
+            // If it's already a full URL, return as is
+            if (imageUrl.startsWith('http://') || imageUrl.startsWith('https://')) {
+                return imageUrl;
+            }
+            
+            // If it starts with /static/, return as is (relative URL)
+            if (imageUrl.startsWith('/static/')) {
+                return imageUrl;
+            }
+            
+            // If it's just a filename, prepend /static/uploads/
+            if (!imageUrl.includes('/')) {
+                return '/static/uploads/' + imageUrl;
+            }
+            
+            // If it starts with static/ (without leading slash), add the slash
+            if (imageUrl.startsWith('static/')) {
+                return '/' + imageUrl;
+            }
+            
+            return imageUrl;
+        }
+
+        // Function to handle image loading errors
+        function handleImageError(imgElement) {
+            console.error('Failed to load image:', imgElement.src);
+            imgElement.style.display = 'none';
+            const errorDiv = document.createElement('div');
+            errorDiv.className = 'image image-error';
+            errorDiv.textContent = '⚠️ Image failed to load';
+            imgElement.parentNode.insertBefore(errorDiv, imgElement);
+        }
 
         // Fetch current user info
         fetch("/current_user")
@@ -308,15 +369,24 @@
             .then(currentUser => {
                 const currentUsername = currentUser.username || "Unknown";
 
+                console.log('Fetching photos for place:', place);
+
                 // Fetch all photos and incidents
                 fetch("/photos/" + encodeURIComponent(place))
-                    .then(res => res.json())
+                    .then(res => {
+                        if (!res.ok) {
+                            throw new Error('Network response was not ok');
+                        }
+                        return res.json();
+                    })
                     .then(data => {
+                        console.log('Received photos data:', data);
+                        
                         const feed = document.getElementById("feed");
                         feed.innerHTML = "";
 
-                        if (data.length === 0) {
-                            feed.innerHTML = "<div class='empty-state'>🔭 No photos found</div>";
+                        if (!data || data.length === 0) {
+                            feed.innerHTML = "<div class='empty-state'>🔭 No photos found for " + place + "</div>";
                             return;
                         }
 
@@ -325,18 +395,22 @@
                             
                             // Get poster's info from incident data
                             const posterUsername = incident.username || "Anonymous";
-                            const posterPhoto = incident.user_photo || "";
+                            const posterPhoto = normalizeImageUrl(incident.user_photo);
                             const posterLocation = incident.place || "Unknown location";
                             
                             // Create profile initial if no photo
                             const profileInitial = posterUsername.charAt(0).toUpperCase();
+
+                            // Normalize incident image URL
+                            const incidentImageUrl = normalizeImageUrl(incident.image);
+                            console.log('Incident image URL:', incidentImageUrl);
 
                             // Create card HTML
                             let cardHTML = `
                                 <div class="card">
                                     <div class="top">
                                         <div class="profile">
-                                            ${posterPhoto ? `<img src="${posterPhoto}" alt="Profile">` : profileInitial}
+                                            ${posterPhoto ? `<img src="${posterPhoto}" alt="Profile" onerror="this.style.display='none'; this.parentElement.textContent='${profileInitial}';">` : profileInitial}
                                         </div>
                                         <div class="info">
                                             <b>${posterUsername}</b>
@@ -347,9 +421,13 @@
                                         </div>
                                     </div>
 
-                                    <img src="${incident.image}" class="image" alt="Incident">
+                                    <img src="${incidentImageUrl}" 
+                                         class="image" 
+                                         alt="Incident" 
+                                         onerror="handleImageError(this)"
+                                         onload="console.log('Image loaded successfully:', this.src)">
 
-                                <div class="desc">
+                                    <div class="desc">
                                         ${incident.description || "No description provided"}
                                     </div>
 
@@ -391,38 +469,50 @@
                         });
                     })
                     .catch(error => {
+                        console.error('Error fetching photos:', error);
                         const feed = document.getElementById("feed");
-                        feed.innerHTML = "<div class='empty-state'>⚠️ Error loading photos</div>";
+                        feed.innerHTML = "<div class='empty-state'>⚠️ Error loading photos: " + error.message + "</div>";
                     });
+            })
+            .catch(error => {
+                console.error('Error fetching current user:', error);
             });
 
         function formatDateTime(timeStr) {
             if (!timeStr) return "Unknown time";
-            const date = new Date(timeStr.replace(" ", "T"));
-            const day = date.getDate();
-            const month = date.toLocaleString("en-US", { month: "short" });
-            const year = date.getFullYear();
-            let hours = date.getHours();
-            const minutes = date.getMinutes().toString().padStart(2, "0");
-            const ampm = hours >= 12 ? "PM" : "AM";
-            hours = hours % 12 || 12;
-            return `${day} ${month} ${year} • ${hours}:${minutes} ${ampm}`;
+            try {
+                const date = new Date(timeStr.replace(" ", "T"));
+                const day = date.getDate();
+                const month = date.toLocaleString("en-US", { month: "short" });
+                const year = date.getFullYear();
+                let hours = date.getHours();
+                const minutes = date.getMinutes().toString().padStart(2, "0");
+                const ampm = hours >= 12 ? "PM" : "AM";
+                hours = hours % 12 || 12;
+                return `${day} ${month} ${year} • ${hours}:${minutes} ${ampm}`;
+            } catch (e) {
+                return timeStr;
+            }
         }
 
         function formatCommentTime(timeStr) {
             if (!timeStr) return "Just now";
-            const date = new Date(timeStr.replace(" ", "T"));
-            const now = new Date();
-            const diffMs = now - date;
-            const diffMins = Math.floor(diffMs / 60000);
+            try {
+                const date = new Date(timeStr.replace(" ", "T"));
+                const now = new Date();
+                const diffMs = now - date;
+                const diffMins = Math.floor(diffMs / 60000);
 
-            if (diffMins < 1) return "Just now";
-            if (diffMins < 60) return `${diffMins}m ago`;
-            const diffHours = Math.floor(diffMins / 60);
-            if (diffHours < 24) return `${diffHours}h ago`;
-            const diffDays = Math.floor(diffHours / 24);
-            if (diffDays < 7) return `${diffDays}d ago`;
-            return formatDateTime(timeStr);
+                if (diffMins < 1) return "Just now";
+                if (diffMins < 60) return `${diffMins}m ago`;
+                const diffHours = Math.floor(diffMins / 60);
+                if (diffHours < 24) return `${diffHours}h ago`;
+                const diffDays = Math.floor(diffHours / 24);
+                if (diffDays < 7) return `${diffDays}d ago`;
+                return formatDateTime(timeStr);
+            } catch (e) {
+                return timeStr;
+            }
         }
 
         function toggleComment(id) {
@@ -455,10 +545,11 @@
                     // Reload the page to show the new comment
                     location.reload();
                 } else {
-                    alert("Failed to post comment");
+                    alert("Failed to post comment: " + (data.message || 'Unknown error'));
                 }
             })
             .catch(error => {
+                console.error('Error posting comment:', error);
                 alert("Error posting comment: " + error.message);
             });
         }
@@ -477,6 +568,9 @@
                 alert("✅ Link copied to clipboard!");
             }
         }
+
+        // Make handleImageError globally accessible
+        window.handleImageError = handleImageError;
     </script>
 </body>
 </html>

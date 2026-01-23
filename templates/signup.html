@@ -1,0 +1,320 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Create Account - Neighbourhood Safety App</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/intl-tel-input@18.2.1/build/css/intlTelInput.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .card {
+            width: 100%;
+            max-width: 650px;
+            background: white;
+            padding: 40px;
+            border-radius: 20px;
+            box-shadow: 0 12px 35px rgba(0, 0, 0, 0.25);
+            animation: slideUp 0.5s ease-out;
+        }
+
+        @keyframes slideUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        h2 {
+            text-align: center;
+            color: #1a5276;
+            margin-bottom: 8px;
+            font-size: 28px;
+            font-weight: 700;
+        }
+
+        .subtitle {
+            text-align: center;
+            font-size: 15px;
+            color: #666;
+            margin-bottom: 30px;
+        }
+
+        .section {
+            margin-bottom: 25px;
+        }
+
+        .section-title {
+            font-size: 16px;
+            font-weight: 700;
+            color: #1a5276;
+            margin-bottom: 12px;
+            padding-bottom: 8px;
+            border-bottom: 2px solid #e0e0e0;
+        }
+
+        .grid-2 {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+        }
+
+        .grid-1 {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 15px;
+        }
+
+        input, select {
+            width: 100%;
+            padding: 13px;
+            border-radius: 8px;
+            border: 2px solid #e0e0e0;
+            font-size: 15px;
+            transition: all 0.3s ease;
+            font-family: inherit;
+        }
+
+        input:focus, select:focus {
+            outline: none;
+            border-color: #1a5276;
+            box-shadow: 0 0 0 3px rgba(26, 82, 118, 0.1);
+        }
+
+        .hint {
+            font-size: 13px;
+            color: #777;
+            margin-top: 5px;
+            font-style: italic;
+        }
+
+        .warning {
+            font-size: 13px;
+            color: #e74c3c;
+            margin-top: 5px;
+            font-weight: 600;
+        }
+
+        button {
+            width: 100%;
+            padding: 16px;
+            background: linear-gradient(135deg, #1a5276 0%, #2874a6 100%);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-size: 17px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 12px rgba(26, 82, 118, 0.3);
+        }
+
+        button:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 16px rgba(26, 82, 118, 0.4);
+        }
+
+        button:disabled {
+            background: #aaa;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        @media (max-width: 768px) {
+            .card {
+                padding: 30px 25px;
+            }
+
+            .grid-2 {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="card">
+        <h2>🏘️ Create Account</h2>
+        <div class="subtitle">Join your neighbourhood safety network</div>
+
+        <form id="signupForm" enctype="multipart/form-data">
+            <!-- PERSONAL DETAILS -->
+            <div class="section">
+                <div class="section-title">📝 Personal Details</div>
+                <div class="grid-2">
+                    <input name="firstname" type="text" placeholder="First Name" required oninput="suggestUsername()">
+                    <input name="lastname" type="text" placeholder="Last Name" required oninput="suggestUsername()">
+                </div>
+                <div class="grid-1" style="margin-top:15px;">
+                    <input id="mobile" name="mobile" type="tel" placeholder="Mobile Number" required>
+                </div>
+            </div>
+
+            <!-- LOCATION DETAILS -->
+            <div class="section">
+                <div class="section-title">📍 Location Details (Andhra Pradesh)</div>
+                <div class="grid-1">
+                    <select id="district" name="district" onchange="loadVillages(this.value)" required>
+                        <option value="">Select District</option>
+                    </select>
+                    <select id="village" name="village" required>
+                        <option value="">Select Village</option>
+                    </select>
+                </div>
+            </div>
+
+            <!-- ACCOUNT DETAILS -->
+            <div class="section">
+                <div class="section-title">🔐 Account Details</div>
+                <div class="grid-1">
+                    <input name="username" type="text" placeholder="Username" required>
+                    <div class="hint" id="suggestion"></div>
+
+                    <input type="password" name="password" 
+                           placeholder="Password" 
+                           oninput="checkPassword(this.value)" 
+                           required>
+                    <div class="warning" id="pwdWarn"></div>
+
+                    <input type="file" name="photo" accept="image/*">
+                    <div class="hint">📷 Profile photo (optional)</div>
+                </div>
+            </div>
+
+            <button id="signupBtn" type="submit" disabled>Create Account</button>
+        </form>
+    </div>
+
+    <script>
+        const locationData = {
+            "Alluri Sitharama Raju": ["Paderu", "Chintapalli", "Araku Valley"],
+            "Anakapalli": ["Anakapalli", "Narsipatnam", "Chodavaram"],
+            "Ananthapuramu": ["Anantapur", "Gooty", "Tadipatri"],
+            "Annamayya": ["Rayachoti", "Madanapalle", "Lakkireddypalli"],
+            "Bapatla": ["Bapatla", "Chirala", "Repalle"],
+            "Chittoor": ["Chittoor", "Punganur", "Palamaner"],
+            "Dr. B.R. Ambedkar Konaseema": ["Amalapuram", "Ramachandrapuram", "Kothapeta"],
+            "East Godavari": ["Rajamahendravaram", "Rajanagaram", "Kadiyam"],
+            "Eluru": ["Eluru", "Denduluru", "Pedapadu"],
+            "Guntur": ["Guntur", "Tenali", "Mangalagiri"],
+            "Kakinada": ["Kakinada", "Peddapuram", "Samalkot"],
+            "Krishna": ["Vijayawada", "Machilipatnam", "Gudivada"],
+            "Kurnool": ["Kurnool", "Adoni", "Nandyal"],
+            "Nandyal": ["Nandyal", "Banaganapalle", "Dhone"],
+            "NTR District": ["Vijayawada", "Ibrahimpatnam", "Mylavaram"],
+            "Palnadu": ["Narasaraopet", "Sattenapalle", "Vinukonda"],
+            "Parvathipuram Manyam": ["Parvathipuram", "Kurupam", "Salur"],
+            "Prakasam": ["Ongole", "Chirala", "Markapur"],
+            "Sri Potti Sriramulu Nellore": ["Nellore", "Kavali", "Gudur"],
+            "Sri Sathya Sai": ["Puttaparthi", "Dharmavaram", "Hindupur"],
+            "Srikakulam": ["Srikakulam", "Amadalavalasa", "Palasa"],
+            "Tirupati": ["Tirupati", "Srikalahasti", "Gudur"],
+            "Visakhapatnam": ["Visakhapatnam", "Bheemunipatnam", "Anandapuram"],
+            "Vizianagaram": ["Vizianagaram", "Cheepurupalli", "Gajapathinagaram"],
+            "West Godavari": ["Bhimavaram", "Tadepalligudem", "Narasapuram"],
+            "YSR Kadapa": ["Kadapa", "Proddatur", "Pulivendula"]
+        };
+
+        window.onload = function() {
+            const district = document.getElementById("district");
+            Object.keys(locationData).forEach(d => {
+                district.innerHTML += `<option value="${d}">${d}</option>`;
+            });
+        };
+
+        function loadVillages(dist) {
+            const village = document.getElementById("village");
+            village.innerHTML = "<option value=''>Select Village</option>";
+            if (!locationData[dist]) return;
+            locationData[dist].forEach(v => {
+                village.innerHTML += `<option value="${v}">${v}</option>`;
+            });
+        }
+
+        function suggestUsername() {
+            const fn = document.querySelector("[name='firstname']").value;
+            const ln = document.querySelector("[name='lastname']").value;
+            const suggestion = document.getElementById("suggestion");
+            
+            if (fn) {
+                suggestion.innerText =
+                    "💡 Suggested: " +
+                    (fn + ln).toLowerCase().replace(/\s/g, "") +
+                    Math.floor(100 + Math.random() * 900);
+            } else {
+                suggestion.innerText = "";
+            }
+        }
+
+        function checkPassword(pwd) {
+            const strong = pwd.length >= 6 && /[^a-zA-Z0-9]/.test(pwd);
+            const pwdWarn = document.getElementById("pwdWarn");
+            const signupBtn = document.getElementById("signupBtn");
+            
+            pwdWarn.innerText = strong ? "" :
+                "⚠️ Password must be at least 6 characters and include 1 special character";
+            signupBtn.disabled = !strong;
+        }
+
+        document.getElementById("signupForm").onsubmit = function(e) {
+            e.preventDefault();
+            const formData = new FormData(this);
+            const fullNumber = iti.getNumber();
+            const countryData = iti.getSelectedCountryData();
+            
+            formData.set("mobile", fullNumber);
+            formData.append("country", countryData.name);
+
+            fetch("/register", {
+                method: "POST",
+                body: formData
+            })
+            .then(res => res.json())
+            .then(data => {
+                if (data.success && data.otp_required) {
+                    sessionStorage.setItem("signup_mobile", fullNumber);
+                    window.location = "/otp";
+                } else {
+                    alert(data.message || "Registration failed");
+                }
+            })
+            .catch(error => {
+                alert("Error: " + error.message);
+            });
+        };
+    </script>
+
+    <script src="https://cdn.jsdelivr.net/npm/intl-tel-input@18.2.1/build/js/intlTelInput.min.js"></script>
+    <script>
+        const phoneInput = document.querySelector("#mobile");
+        const iti = window.intlTelInput(phoneInput, {
+            initialCountry: "auto",
+            separateDialCode: true,
+            geoIpLookup: function(callback) {
+                fetch("https://ipapi.co/json/")
+                    .then(res => res.json())
+                    .then(data => callback(data.country_code))
+                    .catch(() => callback("in"));
+            },
+            utilsScript: "https://cdn.jsdelivr.net/npm/intl-tel-input@18.2.1/build/js/utils.js"
+        });
+    </script>
+</body>
+</html>

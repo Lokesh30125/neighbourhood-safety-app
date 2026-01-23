@@ -1,0 +1,573 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Route Selection - Neighbourhood Safety App</title>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        header {
+            background: linear-gradient(135deg, #1a5276 0%, #2874a6 100%);
+            color: white;
+            padding: 20px;
+            text-align: center;
+            font-size: 22px;
+            font-weight: 700;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.2);
+        }
+
+        .controls {
+            padding: 20px;
+            background: white;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+            animation: slideDown 0.5s ease-out;
+            position: relative;
+            z-index: 1000;
+        }
+
+        @keyframes slideDown {
+            from {
+                opacity: 0;
+                transform: translateY(-20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .input-group {
+            position: relative;
+            margin-bottom: 12px;
+        }
+
+        input {
+            width: 100%;
+            padding: 14px 50px 14px 14px;
+            border-radius: 10px;
+            border: 2px solid #e0e0e0;
+            font-size: 15px;
+            transition: all 0.3s ease;
+            font-family: inherit;
+        }
+
+        input:focus {
+            outline: none;
+            border-color: #1a5276;
+            box-shadow: 0 0 0 3px rgba(26, 82, 118, 0.1);
+        }
+
+        .current-location-btn {
+            position: absolute;
+            right: 8px;
+            top: 50%;
+            transform: translateY(-50%);
+            background: linear-gradient(135deg, #27ae60 0%, #229954 100%);
+            color: white;
+            border: none;
+            border-radius: 6px;
+            padding: 8px 12px;
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 2px 6px rgba(39, 174, 96, 0.3);
+        }
+
+        .current-location-btn:hover {
+            transform: translateY(-50%) scale(1.05);
+            box-shadow: 0 3px 8px rgba(39, 174, 96, 0.4);
+        }
+
+        .button-group {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+            margin-top: 15px;
+        }
+
+        button {
+            padding: 14px;
+            border: none;
+            border-radius: 10px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .show-route-btn {
+            background: linear-gradient(135deg, #1a5276 0%, #2874a6 100%);
+            color: white;
+            box-shadow: 0 4px 12px rgba(26, 82, 118, 0.3);
+        }
+
+        .show-route-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 16px rgba(26, 82, 118, 0.4);
+        }
+
+        .back-btn {
+            background: linear-gradient(135deg, #95a5a6 0%, #7f8c8d 100%);
+            color: white;
+            box-shadow: 0 4px 12px rgba(127, 140, 141, 0.3);
+        }
+
+        .back-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 16px rgba(127, 140, 141, 0.4);
+        }
+
+        button:active {
+            transform: translateY(0);
+        }
+
+        #map {
+            flex: 1;
+            width: 100%;
+            min-height: calc(100vh - 250px);
+        }
+
+        .incident-popup {
+            max-width: 280px;
+        }
+
+        .incident-popup img {
+            width: 100%;
+            height: 150px;
+            object-fit: cover;
+            border-radius: 8px;
+            margin-bottom: 10px;
+        }
+
+        .incident-popup h4 {
+            color: #1a5276;
+            margin-bottom: 8px;
+            font-size: 16px;
+        }
+
+        .incident-popup p {
+            color: #555;
+            font-size: 13px;
+            margin-bottom: 6px;
+            line-height: 1.4;
+        }
+
+        .incident-popup .time {
+            color: #999;
+            font-size: 12px;
+            font-style: italic;
+        }
+
+        .loading {
+            display: none;
+            text-align: center;
+            padding: 10px;
+            background: #fff3cd;
+            border-radius: 8px;
+            margin-top: 10px;
+            color: #856404;
+            font-weight: 600;
+        }
+
+        .stats {
+            background: #e3f2fd;
+            padding: 10px;
+            border-radius: 8px;
+            margin-top: 10px;
+            color: #1976d2;
+            font-weight: 600;
+            text-align: center;
+            display: none;
+        }
+
+        /* Custom marker styles */
+        .incident-marker {
+            background: #e74c3c;
+            border: 3px solid white;
+            border-radius: 50%;
+            width: 30px;
+            height: 30px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: bold;
+            font-size: 16px;
+            box-shadow: 0 4px 12px rgba(231, 76, 60, 0.5);
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .incident-marker:hover {
+            transform: scale(1.2);
+            box-shadow: 0 6px 16px rgba(231, 76, 60, 0.7);
+        }
+
+        @media (max-width: 768px) {
+            .controls {
+                padding: 15px;
+            }
+
+            .button-group {
+                grid-template-columns: 1fr;
+            }
+
+            #map {
+                min-height: calc(100vh - 280px);
+            }
+        }
+    </style>
+</head>
+<body>
+    <header>🗺️ Route Selection</header>
+
+    <div class="controls">
+        <div class="input-group">
+            <input id="from" type="text" placeholder="📍 From (enter location or use current)" autocomplete="off">
+            <button class="current-location-btn" onclick="useCurrentLocation()">📍 Current</button>
+        </div>
+        
+        <input id="to" type="text" placeholder="🎯 To (enter destination)" autocomplete="off">
+        
+        <div class="button-group">
+            <button class="show-route-btn" onclick="showRoute()">🚀 Show Route</button>
+            <button class="back-btn" onclick="window.location='/dashboard'">← Back</button>
+        </div>
+
+        <div class="loading" id="loading">⏳ Finding route and incidents...</div>
+        <div class="stats" id="stats"></div>
+    </div>
+
+    <div id="map"></div>
+
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script src="https://unpkg.com/leaflet-routing-machine@3.2.12/dist/leaflet-routing-machine.js"></script>
+    
+    <script>
+        let map;
+        let routingControl;
+        let incidentMarkers = [];
+        let currentLocationMarker;
+
+        // Initialize map
+        function initMap() {
+            map = L.map('map').setView([16.2550657, 80.3214494], 13);
+
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                attribution: '© OpenStreetMap contributors',
+                maxZoom: 19
+            }).addTo(map);
+
+            // Add custom CSS for routing control
+            const style = document.createElement('style');
+            style.textContent = `
+                .leaflet-routing-container {
+                    display: none;
+                }
+            `;
+            document.head.appendChild(style);
+        }
+
+        // Get current location
+        function useCurrentLocation() {
+            const fromInput = document.getElementById('from');
+            const loading = document.getElementById('loading');
+            
+            loading.style.display = 'block';
+            loading.textContent = '📍 Getting your location...';
+
+            if (!navigator.geolocation) {
+                alert('❌ Geolocation is not supported by your browser');
+                loading.style.display = 'none';
+                return;
+            }
+
+            navigator.geolocation.getCurrentPosition(
+                async (position) => {
+                    const lat = position.coords.latitude;
+                    const lon = position.coords.longitude;
+
+                    // Reverse geocode to get address
+                    try {
+                        const response = await fetch(
+                            `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lon}`
+                        );
+                        const data = await response.json();
+                        const address = data.display_name || `${lat}, ${lon}`;
+                        
+                        fromInput.value = address;
+                        
+                        // Add marker for current location
+                        if (currentLocationMarker) {
+                            map.removeLayer(currentLocationMarker);
+                        }
+                        
+                        currentLocationMarker = L.marker([lat, lon], {
+                            icon: L.divIcon({
+                                className: 'current-location-marker',
+                                html: '<div style="background: #27ae60; border: 3px solid white; border-radius: 50%; width: 20px; height: 20px; box-shadow: 0 4px 12px rgba(39, 174, 96, 0.5);"></div>',
+                                iconSize: [20, 20]
+                            })
+                        }).addTo(map);
+                        
+                        map.setView([lat, lon], 15);
+                        
+                        loading.style.display = 'none';
+                    } catch (error) {
+                        fromInput.value = `${lat}, ${lon}`;
+                        loading.style.display = 'none';
+                    }
+                },
+                (error) => {
+                    alert('❌ Unable to get your location. Please enter manually.');
+                    loading.style.display = 'none';
+                },
+                {
+                    enableHighAccuracy: true,
+                    timeout: 10000,
+                    maximumAge: 0
+                }
+            );
+        }
+
+        // Geocode address to coordinates
+        async function geocodeAddress(address) {
+            try {
+                const response = await fetch(
+                    `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(address)}`
+                );
+                const data = await response.json();
+                
+                if (data && data.length > 0) {
+                    return {
+                        lat: parseFloat(data[0].lat),
+                        lon: parseFloat(data[0].lon)
+                    };
+                }
+                return null;
+            } catch (error) {
+                console.error('Geocoding error:', error);
+                return null;
+            }
+        }
+
+        // Fetch all incidents
+        async function fetchAllIncidents() {
+            try {
+                const response = await fetch('/all_incidents');
+                const data = await response.json();
+                return data;
+            } catch (error) {
+                console.error('Error fetching incidents:', error);
+                return [];
+            }
+        }
+
+        // Check if point is near route
+        function isPointNearRoute(point, routeCoordinates, maxDistance = 0.005) {
+            // maxDistance in degrees (approximately 500 meters)
+            for (let coord of routeCoordinates) {
+                const distance = Math.sqrt(
+                    Math.pow(coord.lat - point.lat, 2) + 
+                    Math.pow(coord.lng - point.lon, 2)
+                );
+                if (distance <= maxDistance) {
+                    return true;
+                }
+            }
+            return false;
+        }
+
+        // Format time
+        function formatTime(timeStr) {
+            if (!timeStr) return "Unknown time";
+            const date = new Date(timeStr.replace(" ", "T"));
+            const day = date.getDate();
+            const month = date.toLocaleString("en-US", { month: "short" });
+            const year = date.getFullYear();
+            let hours = date.getHours();
+            const minutes = date.getMinutes().toString().padStart(2, "0");
+            const ampm = hours >= 12 ? "PM" : "AM";
+            hours = hours % 12 || 12;
+            return `${day} ${month} ${year} • ${hours}:${minutes} ${ampm}`;
+        }
+
+        // Add incident markers along route
+        function addIncidentMarkers(routeCoordinates, incidents) {
+            // Clear existing markers
+            incidentMarkers.forEach(marker => map.removeLayer(marker));
+            incidentMarkers = [];
+
+            let incidentCount = 0;
+
+            incidents.forEach((incident, index) => {
+                if (incident.latitude && incident.longitude) {
+                    const incidentPoint = {
+                        lat: incident.latitude,
+                        lon: incident.longitude
+                    };
+
+                    if (isPointNearRoute(incidentPoint, routeCoordinates)) {
+                        incidentCount++;
+
+                        const marker = L.marker([incident.latitude, incident.longitude], {
+                            icon: L.divIcon({
+                                className: 'incident-marker-container',
+                                html: `<div class="incident-marker">⚠️</div>`,
+                                iconSize: [30, 30]
+                            }),
+                            zIndexOffset: 1000
+                        });
+
+                        const popupContent = `
+                            <div class="incident-popup">
+                                ${incident.image ? `<img src="${incident.image}" alt="Incident">` : ''}
+                                <h4>🚨 Incident Reported</h4>
+                                <p><strong>📍 Location:</strong> ${incident.place || 'Unknown'}</p>
+                                <p><strong>👤 Reporter:</strong> ${incident.username || 'Anonymous'}</p>
+                                <p><strong>📝 Description:</strong> ${incident.description || 'No description provided'}</p>
+                                <p class="time">🕒 ${formatTime(incident.time)}</p>
+                            </div>
+                        `;
+
+                        marker.bindPopup(popupContent, {
+                            maxWidth: 300,
+                            className: 'incident-popup-container'
+                        });
+
+                        // Highlight on hover
+                        marker.on('mouseover', function() {
+                            this.openPopup();
+                        });
+
+                        marker.addTo(map);
+                        incidentMarkers.push(marker);
+                    }
+                }
+            });
+
+            // Update stats
+            const stats = document.getElementById('stats');
+            if (incidentCount > 0) {
+                stats.style.display = 'block';
+                stats.innerHTML = `⚠️ ${incidentCount} incident${incidentCount > 1 ? 's' : ''} found along this route`;
+                stats.style.background = '#ffebee';
+                stats.style.color = '#c62828';
+            } else {
+                stats.style.display = 'block';
+                stats.innerHTML = '✅ No incidents reported along this route';
+                stats.style.background = '#e8f5e9';
+                stats.style.color = '#2e7d32';
+            }
+        }
+
+        // Show route
+        async function showRoute() {
+            const from = document.getElementById("from").value.trim();
+            const to = document.getElementById("to").value.trim();
+            const loading = document.getElementById('loading');
+            const stats = document.getElementById('stats');
+
+            if (!from || !to) {
+                alert("⚠️ Please enter both From and To locations");
+                return;
+            }
+
+            loading.style.display = 'block';
+            loading.textContent = '⏳ Finding route and checking for incidents...';
+            stats.style.display = 'none';
+
+            // Geocode addresses
+            const fromCoords = await geocodeAddress(from);
+            const toCoords = await geocodeAddress(to);
+
+            if (!fromCoords || !toCoords) {
+                alert("❌ Unable to find one or both locations. Please check your entries.");
+                loading.style.display = 'none';
+                return;
+            }
+
+            // Remove existing routing control
+            if (routingControl) {
+                map.removeControl(routingControl);
+            }
+
+            // Create routing control
+            routingControl = L.Routing.control({
+                waypoints: [
+                    L.latLng(fromCoords.lat, fromCoords.lon),
+                    L.latLng(toCoords.lat, toCoords.lon)
+                ],
+                routeWhileDragging: false,
+                addWaypoints: false,
+                draggableWaypoints: false,
+                lineOptions: {
+                    styles: [{
+                        color: '#1a5276',
+                        opacity: 0.8,
+                        weight: 6
+                    }]
+                },
+                createMarker: function(i, waypoint, n) {
+                    const marker = L.marker(waypoint.latLng, {
+                        icon: L.divIcon({
+                            className: 'route-marker',
+                            html: `<div style="background: ${i === 0 ? '#27ae60' : '#e74c3c'}; border: 3px solid white; border-radius: 50%; width: 24px; height: 24px; display: flex; align-items: center; justify-content: center; color: white; font-weight: bold; box-shadow: 0 4px 12px rgba(0,0,0,0.3);">${i === 0 ? 'A' : 'B'}</div>`,
+                            iconSize: [24, 24]
+                        })
+                    });
+                    
+                    marker.bindPopup(i === 0 ? `📍 Start: ${from}` : `🎯 Destination: ${to}`);
+                    return marker;
+                }
+            }).addTo(map);
+
+            // Fetch incidents and add markers along route
+            routingControl.on('routesfound', async function(e) {
+                const routes = e.routes;
+                const route = routes[0];
+                const routeCoordinates = route.coordinates;
+
+                // Fetch all incidents
+                const incidents = await fetchAllIncidents();
+
+                // Add incident markers along the route
+                addIncidentMarkers(routeCoordinates, incidents);
+
+                loading.style.display = 'none';
+
+                // Fit map to show entire route
+                map.fitBounds(route.bounds, { padding: [50, 50] });
+            });
+        }
+
+        // Initialize map on load
+        window.onload = function() {
+            initMap();
+
+            // Allow Enter key to show route
+            document.getElementById("to").addEventListener("keypress", function(e) {
+                if (e.key === "Enter") {
+                    showRoute();
+                }
+            });
+        };
+    </script>
+</body>
+</html>

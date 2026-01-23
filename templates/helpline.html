@@ -1,0 +1,350 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Emergency Helplines - Neighbourhood Safety App</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #c0392b 0%, #e74c3c 100%);
+            color: white;
+            padding: 20px;
+            text-align: center;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+        }
+
+        .header h2 {
+            font-size: 26px;
+            font-weight: 700;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.2);
+            margin-bottom: 8px;
+        }
+
+        .header p {
+            font-size: 14px;
+            opacity: 0.95;
+        }
+
+        .container {
+            max-width: 700px;
+            margin: 30px auto;
+            padding: 0 20px;
+        }
+
+        .box {
+            background: white;
+            padding: 30px;
+            border-radius: 16px;
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
+            margin-bottom: 20px;
+            animation: slideUp 0.5s ease-out;
+        }
+
+        @keyframes slideUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .helpline-card {
+            background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+            border-radius: 12px;
+            padding: 18px;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 18px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+
+        .helpline-card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 6px 16px rgba(0, 0, 0, 0.12);
+        }
+
+        .icon {
+            font-size: 48px;
+            min-width: 60px;
+            text-align: center;
+        }
+
+        .helpline-info {
+            flex: 1;
+        }
+
+        .helpline-name {
+            font-size: 16px;
+            font-weight: 700;
+            color: #2c3e50;
+            margin-bottom: 4px;
+        }
+
+        .helpline-number {
+            font-size: 28px;
+            font-weight: 800;
+            color: #e74c3c;
+            font-family: 'Courier New', monospace;
+            letter-spacing: 2px;
+        }
+
+        .call-btn {
+            background: linear-gradient(135deg, #27ae60 0%, #229954 100%);
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 12px rgba(39, 174, 96, 0.3);
+            min-width: 80px;
+        }
+
+        .call-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 16px rgba(39, 174, 96, 0.4);
+        }
+
+        .back-btn {
+            width: 100%;
+            background: linear-gradient(135deg, #95a5a6 0%, #7f8c8d 100%);
+            color: white;
+            border: none;
+            padding: 14px;
+            border-radius: 10px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 12px rgba(127, 140, 141, 0.3);
+            margin-top: 10px;
+        }
+
+        .back-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 16px rgba(127, 140, 141, 0.4);
+        }
+
+        .section-title {
+            font-size: 20px;
+            font-weight: 700;
+            color: #1a5276;
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 3px solid #e0e0e0;
+        }
+
+        .note {
+            background: #fff3cd;
+            border-left: 4px solid #ff9800;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            font-size: 14px;
+            color: #856404;
+            line-height: 1.6;
+        }
+
+        .note strong {
+            color: #c0392b;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .container {
+                padding: 0 15px;
+            }
+
+            .box {
+                padding: 20px;
+            }
+
+            .helpline-card {
+                padding: 15px;
+                gap: 12px;
+            }
+
+            .icon {
+                font-size: 36px;
+                min-width: 50px;
+            }
+
+            .helpline-name {
+                font-size: 14px;
+            }
+
+            .helpline-number {
+                font-size: 22px;
+            }
+
+            .call-btn {
+                padding: 10px 18px;
+                font-size: 13px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h2>🚨 Emergency Helpline Numbers</h2>
+        <p>Quick access to emergency services</p>
+    </div>
+
+    <div class="container">
+        <div class="box">
+            <div class="note">
+                <strong>Important:</strong> These helpline numbers are available 24/7. In case of emergency, don't hesitate to call. Save these numbers for quick access.
+            </div>
+
+            <div class="section-title">📞 Emergency Services</div>
+
+            <!-- All-in-One Emergency -->
+            <div class="helpline-card" onclick="callNumber('112')">
+                <div class="icon">🆘</div>
+                <div class="helpline-info">
+                    <div class="helpline-name">All-in-One Emergency</div>
+                    <div class="helpline-number">112</div>
+                </div>
+                <button class="call-btn" onclick="event.stopPropagation(); callNumber('112')">📞 Call</button>
+            </div>
+
+            <!-- Police -->
+            <div class="helpline-card" onclick="callNumber('100')">
+                <div class="icon">👮</div>
+                <div class="helpline-info">
+                    <div class="helpline-name">Police</div>
+                    <div class="helpline-number">100</div>
+                </div>
+                <button class="call-btn" onclick="event.stopPropagation(); callNumber('100')">📞 Call</button>
+            </div>
+
+            <!-- Ambulance -->
+            <div class="helpline-card" onclick="callNumber('108')">
+                <div class="icon">🚑</div>
+                <div class="helpline-info">
+                    <div class="helpline-name">Ambulance (EMRI)</div>
+                    <div class="helpline-number">108</div>
+                </div>
+                <button class="call-btn" onclick="event.stopPropagation(); callNumber('108')">📞 Call</button>
+            </div>
+
+            <!-- Fire Brigade -->
+            <div class="helpline-card" onclick="callNumber('101')">
+                <div class="icon">🚒</div>
+                <div class="helpline-info">
+                    <div class="helpline-name">Fire Brigade</div>
+                    <div class="helpline-number">101</div>
+                </div>
+                <button class="call-btn" onclick="event.stopPropagation(); callNumber('101')">📞 Call</button>
+            </div>
+
+            <div class="section-title">👥 Support Helplines</div>
+
+            <!-- Women Helpline -->
+            <div class="helpline-card" onclick="callNumber('181')">
+                <div class="icon">👩</div>
+                <div class="helpline-info">
+                    <div class="helpline-name">Women Helpline</div>
+                    <div class="helpline-number">181</div>
+                </div>
+                <button class="call-btn" onclick="event.stopPropagation(); callNumber('181')">📞 Call</button>
+            </div>
+
+            <!-- Women Police -->
+            <div class="helpline-card" onclick="callNumber('1091')">
+                <div class="icon">👮‍♀️</div>
+                <div class="helpline-info">
+                    <div class="helpline-name">Women Police</div>
+                    <div class="helpline-number">1091</div>
+                </div>
+                <button class="call-btn" onclick="event.stopPropagation(); callNumber('1091')">📞 Call</button>
+            </div>
+
+            <!-- Child Helpline -->
+            <div class="helpline-card" onclick="callNumber('1098')">
+                <div class="icon">👶</div>
+                <div class="helpline-info">
+                    <div class="helpline-name">Child Helpline</div>
+                    <div class="helpline-number">1098</div>
+                </div>
+                <button class="call-btn" onclick="event.stopPropagation(); callNumber('1098')">📞 Call</button>
+            </div>
+
+            <div class="section-title">🏥 Health & Utilities</div>
+
+            <!-- Health Helpline -->
+            <div class="helpline-card" onclick="callNumber('104')">
+                <div class="icon">🏥</div>
+                <div class="helpline-info">
+                    <div class="helpline-name">Health Helpline</div>
+                    <div class="helpline-number">104</div>
+                </div>
+                <button class="call-btn" onclick="event.stopPropagation(); callNumber('104')">📞 Call</button>
+            </div>
+
+            <!-- Traffic Police -->
+            <div class="helpline-card" onclick="callNumber('1073')">
+                <div class="icon">🚦</div>
+                <div class="helpline-info">
+                    <div class="helpline-name">Traffic Police</div>
+                    <div class="helpline-number">1073</div>
+                </div>
+                <button class="call-btn" onclick="event.stopPropagation(); callNumber('1073')">📞 Call</button>
+            </div>
+
+            <!-- Electricity Emergency -->
+            <div class="helpline-card" onclick="callNumber('1912')">
+                <div class="icon">⚡</div>
+                <div class="helpline-info">
+                    <div class="helpline-name">Electricity Emergency</div>
+                    <div class="helpline-number">1912</div>
+                </div>
+                <button class="call-btn" onclick="event.stopPropagation(); callNumber('1912')">📞 Call</button>
+            </div>
+
+            <!-- Disaster Management -->
+            <div class="helpline-card" onclick="callNumber('1070')">
+                <div class="icon">🌪️</div>
+                <div class="helpline-info">
+                    <div class="helpline-name">Disaster Management</div>
+                    <div class="helpline-number">1070</div>
+                </div>
+                <button class="call-btn" onclick="event.stopPropagation(); callNumber('1070')">📞 Call</button>
+            </div>
+
+            <button class="back-btn" onclick="window.location='/dashboard'">
+                ← Back to Dashboard
+            </button>
+        </div>
+    </div>
+
+    <script>
+        function callNumber(number) {
+            // Confirm before calling
+            if (confirm(`Do you want to call ${number}?`)) {
+                window.location.href = `tel:${number}`;
+            }
+        }
+    </script>
+</body>
+</html>

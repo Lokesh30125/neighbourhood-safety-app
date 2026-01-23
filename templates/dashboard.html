@@ -1,0 +1,704 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard - Neighbourhood Safety App</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            text-align: center;
+        }
+
+        header {
+            background: linear-gradient(135deg, #1a5276 0%, #2874a6 100%);
+            color: white;
+            padding: 20px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+        }
+
+        header h2 {
+            font-size: 24px;
+            font-weight: 600;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.2);
+        }
+
+        /* TOP BAR STYLES */
+        .topbar {
+            position: relative;
+            height: 64px;
+            background: white;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+            padding: 0 24px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            text-align: left;
+        }
+
+        .left-section {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .title {
+            font-size: 18px;
+            font-weight: 700;
+            color: #1a5276;
+            letter-spacing: 0.5px;
+        }
+
+        .logout-btn {
+            padding: 8px 20px;
+            background: linear-gradient(135deg, #e74c3c 0%, #c0392b 100%);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 2px 8px rgba(231, 76, 60, 0.3);
+        }
+
+        .logout-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(231, 76, 60, 0.4);
+        }
+
+        /* PROFILE SECTION */
+        .profile {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .profile:hover {
+            opacity: 0.8;
+            transform: scale(1.05);
+        }
+
+        .profile-img {
+            width: 42px;
+            height: 42px;
+            border-radius: 50%;
+            object-fit: cover;
+            border: 3px solid #1a5276;
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
+            transition: all 0.3s ease;
+        }
+
+        .profile:hover .profile-img {
+            border-color: #2874a6;
+        }
+
+        .profile-text {
+            font-weight: 600;
+            color: #1a5276;
+            font-size: 16px;
+        }
+
+        .profile-text .greeting {
+            font-size: 14px;
+            color: #666;
+            font-weight: 500;
+        }
+
+        /* MAIN CONTAINER */
+        .container {
+            max-width: 600px;
+            margin: 30px auto;
+            padding: 0 20px;
+        }
+
+        .box {
+            background: white;
+            padding: 35px;
+            border-radius: 16px;
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+            margin-bottom: 30px;
+            animation: fadeIn 0.5s ease-in;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .box h3 {
+            color: #1a5276;
+            margin-bottom: 25px;
+            font-size: 22px;
+            font-weight: 700;
+        }
+
+        /* 🔥 ALERT NOTIFICATION STYLES */
+        .alert-container {
+    position: fixed;
+    bottom: 20px;     /* 👈 move to bottom */
+    right: 20px;
+    z-index: 1000;
+    max-width: 400px;
+}
+
+
+        .alert-notification {
+            background: linear-gradient(135deg, #ff6b6b 0%, #ee5a6f 100%);
+            color: white;
+            padding: 20px;
+            border-radius: 12px;
+            box-shadow: 0 8px 24px rgba(255, 107, 107, 0.4);
+            margin-bottom: 15px;
+            animation: slideInRight 0.5s ease-out;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .alert-notification:hover {
+            transform: translateX(-5px);
+            box-shadow: 0 10px 30px rgba(255, 107, 107, 0.5);
+        }
+
+        @keyframes slideInUp {
+    from {
+        opacity: 0;
+        transform: translateY(80px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+
+        .alert-notification.warning {
+            background: linear-gradient(135deg, #ffa726 0%, #fb8c00 100%);
+            box-shadow: 0 8px 24px rgba(255, 167, 38, 0.4);
+        }
+
+        .alert-notification.info {
+            background: linear-gradient(135deg, #42a5f5 0%, #1e88e5 100%);
+            box-shadow: 0 8px 24px rgba(66, 165, 245, 0.4);
+        }
+
+        .alert-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+
+        .alert-icon {
+            font-size: 24px;
+        }
+
+        .alert-close {
+            background: rgba(255, 255, 255, 0.3);
+            border: none;
+            color: white;
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            cursor: pointer;
+            font-weight: bold;
+            transition: all 0.3s ease;
+        }
+
+        .alert-close:hover {
+            background: rgba(255, 255, 255, 0.5);
+        }
+
+        .alert-title {
+            font-size: 16px;
+            font-weight: 700;
+            margin-bottom: 5px;
+        }
+
+        .alert-message {
+            font-size: 14px;
+            line-height: 1.5;
+            opacity: 0.95;
+        }
+
+        .alert-time {
+            font-size: 12px;
+            opacity: 0.8;
+            margin-top: 8px;
+        }
+
+        /* ALERT BOX IN DASHBOARD */
+        #alertBox {
+            background: linear-gradient(135deg, #fff3cd 0%, #ffe69c 100%);
+            padding: 16px;
+            border-radius: 12px;
+            margin-bottom: 20px;
+            font-size: 15px;
+            border-left: 4px solid #ff9800;
+            display: none;
+            animation: slideInUp 0.5s ease-out;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        #alertBox:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(255, 152, 0, 0.3);
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateX(-20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+
+        #alertBox b {
+            color: #e67e22;
+        }
+
+        /* ALERT BADGE */
+        .alert-badge {
+            position: absolute;
+            top: -5px;
+            right: -5px;
+            background: #e74c3c;
+            color: white;
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+            font-weight: bold;
+            animation: pulse 2s ease-in-out infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% {
+                transform: scale(1);
+                box-shadow: 0 0 0 0 rgba(231, 76, 60, 0.7);
+            }
+            50% {
+                transform: scale(1.1);
+                box-shadow: 0 0 0 10px rgba(231, 76, 60, 0);
+            }
+        }
+
+        /* BUTTONS */
+        button {
+            width: 100%;
+            padding: 14px 24px;
+            border: none;
+            border-radius: 10px;
+            background: linear-gradient(135deg, #1a5276 0%, #2874a6 100%);
+            color: white;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: 600;
+            margin-top: 15px;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 12px rgba(26, 82, 118, 0.3);
+        }
+
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 16px rgba(26, 82, 118, 0.4);
+        }
+
+        button:active {
+            transform: translateY(0);
+        }
+
+        /* ACTION BUTTONS */
+        .action-buttons {
+            display: grid;
+            gap: 16px;
+            margin: 25px 0;
+        }
+
+        .report {
+            background: linear-gradient(135deg, #e74c3c 0%, #c0392b 100%);
+            box-shadow: 0 4px 12px rgba(231, 76, 60, 0.3);
+        }
+
+        .report:hover {
+            box-shadow: 0 6px 16px rgba(231, 76, 60, 0.4);
+        }
+
+        .route {
+            background: linear-gradient(135deg, #2980b9 0%, #1f5f8b 100%);
+            box-shadow: 0 4px 12px rgba(41, 128, 185, 0.3);
+        }
+
+        .route:hover {
+            box-shadow: 0 6px 16px rgba(41, 128, 185, 0.4);
+        }
+
+        .helpline {
+            background: linear-gradient(135deg, #27ae60 0%, #229954 100%);
+            box-shadow: 0 4px 12px rgba(39, 174, 96, 0.3);
+        }
+
+        .helpline:hover {
+            box-shadow: 0 6px 16px rgba(39, 174, 96, 0.4);
+        }
+
+        /* NEWS SECTION */
+        .news {
+            text-align: left;
+            margin-top: 25px;
+            background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+            padding: 20px;
+            border-radius: 12px;
+            border-left: 4px solid #1a5276;
+        }
+
+        .news h4 {
+            margin-top: 0;
+            margin-bottom: 15px;
+            color: #1a5276;
+            font-size: 18px;
+            font-weight: 700;
+        }
+
+        .news p {
+            font-size: 14px;
+            margin: 10px 0;
+            color: #495057;
+            padding-left: 8px;
+            line-height: 1.6;
+        }
+
+        /* EMERGENCY NUMBERS SECTION */
+        .emergency-numbers {
+            text-align: left;
+            margin-top: 20px;
+            background: linear-gradient(135deg, #ffe6e6 0%, #ffd4d4 100%);
+            padding: 20px;
+            border-radius: 12px;
+            border-left: 4px solid #e74c3c;
+        }
+
+        .emergency-numbers h4 {
+            margin-top: 0;
+            margin-bottom: 15px;
+            color: #c0392b;
+            font-size: 18px;
+            font-weight: 700;
+        }
+
+        .emergency-numbers p {
+            font-size: 14px;
+            margin: 8px 0;
+            color: #721c24;
+            padding-left: 8px;
+            line-height: 1.6;
+            font-weight: 500;
+        }
+
+        /* LOCATION TEXT */
+        #placeText {
+            display: none;
+            margin-top: 20px;
+            padding: 12px;
+            background: #e3f2fd;
+            border-radius: 8px;
+            color: #1976d2;
+            font-weight: 600;
+        }
+
+        /* RESPONSIVE DESIGN */
+        @media (max-width: 768px) {
+            .container {
+                padding: 0 15px;
+            }
+
+            .box {
+                padding: 25px;
+            }
+
+            header h2 {
+                font-size: 20px;
+            }
+
+            .title {
+                font-size: 16px;
+            }
+
+            .alert-container {
+                top: 10px;
+                right: 10px;
+                left: 10px;
+                max-width: none;
+            }
+
+            .topbar {
+                padding: 0 15px;
+            }
+
+            .left-section {
+                gap: 10px;
+            }
+
+            .logout-btn {
+                padding: 6px 14px;
+                font-size: 13px;
+            }
+
+            .profile-text {
+                font-size: 14px;
+            }
+
+            .profile-text .greeting {
+                display: none;
+            }
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <h2>🏘️ Neighbourhood Safety App</h2>
+    </header>
+
+    <!-- TOP BAR -->
+    <div class="topbar">
+        <div class="left-section">
+            <div class="title">Dashboard</div>
+            <form action="/logout" method="POST" style="margin: 0;">
+                <button type="submit" class="logout-btn">← Logout</button>
+            </form>
+        </div>
+
+        <div id="alertBox" onclick="showAllAlerts()">
+            🔔 <b>Alerts</b><br>
+            ⚠️ <span id="alertCount"></span> new incidents reported today
+        </div>
+
+        <div class="profile" onclick="window.location='/profile'">
+            <div style="position: relative;">
+                <img
+                    id="profileImg"
+                    src="{{ user_photo if user_photo else url_for('static', filename='guest.png') }}"
+                    class="profile-img"
+                    alt="Profile">
+                <div id="profileBadge" class="alert-badge" style="display: none;">0</div>
+            </div>
+            <span class="profile-text">
+                <span class="greeting">Hi,</span> {{username }}
+            </span>
+        </div>
+    </div>
+
+    <!-- 🔥 ALERT NOTIFICATION CONTAINER -->
+    <div class="alert-container" id="alertContainer"></div>
+
+    <div class="container">
+        <div class="box">
+            <h3>✅ Login Successful</h3>
+
+            <!-- ACTION BUTTONS -->
+            <div class="action-buttons">
+                <button class="report" onclick="window.location='/report'">
+                    🚨 REPORT INCIDENT
+                </button>
+                <button class="route" onclick="window.location='/route'">
+                    🗺️ ROUTE SELECTION
+                </button>
+                <button class="helpline" onclick="window.location='/helpline'">
+                    📞 HELPLINE NUMBERS
+                </button>
+            </div>
+
+            <!-- NEWS SECTION -->
+            <div class="news">
+                <h4>📰 Local Safety News</h4>
+                <p>• Street light maintenance scheduled this week</p>
+                <p>• Increased night patrols in residential areas</p>
+                <p>• Community meeting on safety awareness</p>
+            </div>
+
+            <!-- EMERGENCY NUMBERS SECTION -->
+            <div class="emergency-numbers">
+                <h4>🚨 Quick Emergency Numbers</h4>
+                <p>• All-in-One Emergency – <strong>112</strong></p>
+                <p>• Police – <strong>100</strong></p>
+                <p>• Ambulance (EMRI) – <strong>108</strong></p>
+                <p>• Fire Brigade – <strong>101</strong></p>
+                <p>• Women Helpline – <strong>181</strong></p>
+                <p>• Child Helpline – <strong>1098</strong></p>
+            </div>
+
+            <!-- LOCATION -->
+            <p id="placeText">📍 Resolving location…</p>
+        </div>
+    </div>
+
+    <script>
+        let alertsData = [];
+        let shownAlerts = new Set();
+
+        /* USER LOCATION WITH PERMISSION */
+        function loadUserLocation() {
+            document.getElementById("placeText").style.display = "block";
+
+            if (navigator.geolocation) {
+                navigator.geolocation.getCurrentPosition(
+                    (position) => {
+                        const lat = position.coords.latitude;
+                        const lon = position.coords.longitude;
+
+                        fetch(`https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lon}&format=json`)
+                            .then(res => res.json())
+                            .then(data => {
+                                const place = data.address.suburb || data.address.town || data.address.city || "Unknown";
+                                document.getElementById("placeText").textContent = `📍 Current Location: ${place}`;
+                            })
+                            .catch(() => {
+                                document.getElementById("placeText").textContent = "📍 Location unavailable";
+                            });
+                    },
+                    (error) => {
+                        document.getElementById("placeText").textContent = "📍 Location permission denied";
+                    }
+                );
+            } else {
+                document.getElementById("placeText").textContent = "📍 Geolocation not supported";
+            }
+        }
+
+        /* 🔥 CHECK FOR NEW ALERTS */
+        function checkAlerts() {
+            fetch("/recent_incidents")
+                .then(res => res.json())
+                .then(data => {
+                    alertsData = data.incidents || [];
+                    const count = data.count || 0;
+
+                    if (count > 0) {
+                        document.getElementById("alertBox").style.display = "block";
+                        document.getElementById("alertCount").textContent = count;
+                        document.getElementById("profileBadge").style.display = "flex";
+                        document.getElementById("profileBadge").textContent = count;
+
+                        // Show new alerts as notifications
+                        alertsData.forEach((alert, index) => {
+                            if (!shownAlerts.has(alert.id)) {
+                                setTimeout(() => {
+                                    showAlertNotification(alert);
+                                    shownAlerts.add(alert.id);
+                                }, index * 1000); // Stagger alerts by 1 second
+                            }
+                        });
+                    }
+                })
+                .catch(error => {
+                    console.error("Error fetching alerts:", error);
+                });
+        }
+
+        /* 🔥 SHOW ALERT NOTIFICATION */
+        function showAlertNotification(alert) {
+            const container = document.getElementById("alertContainer");
+            const alertDiv = document.createElement("div");
+            
+            // Determine alert type based on keywords in description
+            let alertClass = "alert-notification";
+            let icon = "🚨";
+            
+            if (alert.description && alert.description.toLowerCase().includes("emergency")) {
+                alertClass += " danger";
+                icon = "🚨";
+            } else if (alert.description && alert.description.toLowerCase().includes("warning")) {
+                alertClass += " warning";
+                icon = "⚠️";
+            } else {
+                alertClass += " info";
+                icon = "ℹ️";
+            }
+
+            alertDiv.className = alertClass;
+            alertDiv.innerHTML = `
+                <div class="alert-header">
+                    <span class="alert-icon">${icon}</span>
+                    <button class="alert-close" onclick="this.parentElement.parentElement.remove()">×</button>
+                </div>
+                <div class="alert-title">New Incident Reported</div>
+                <div class="alert-message">${alert.description || "An incident has been reported in your area"}</div>
+                <div class="alert-time">📍 ${alert.place || "Nearby"} • ${formatTime(alert.time)}</div>
+            `;
+
+            container.appendChild(alertDiv);
+
+            // Auto-remove after 10 seconds
+            setTimeout(() => {
+                alertDiv.style.opacity = "0";
+                alertDiv.style.transform = "translateY(80px)";
+                setTimeout(() => alertDiv.remove(), 300);
+            }, 10000);
+
+            // Click to view details
+            alertDiv.onclick = function() {
+                window.location = "/report";
+            };
+        }
+
+        /* 🔥 SHOW ALL ALERTS */
+        function showAllAlerts() {
+            if (alertsData.length === 0) return;
+
+            const container = document.getElementById("alertContainer");
+            container.innerHTML = ""; // Clear existing
+            
+            alertsData.forEach(alert => {
+                showAlertNotification(alert);
+            });
+        }
+
+        /* FORMAT TIME */
+        function formatTime(timeStr) {
+            const date = new Date(timeStr);
+            const now = new Date();
+            const diffMs = now - date;
+            const diffMins = Math.floor(diffMs / 60000);
+
+            if (diffMins < 1) return "Just now";
+            if (diffMins < 60) return `${diffMins}m ago`;
+            const diffHours = Math.floor(diffMins / 60);
+            if (diffHours < 24) return `${diffHours}h ago`;
+            const diffDays = Math.floor(diffHours / 24);
+            return `${diffDays}d ago`;
+        }
+
+        /* INITIALIZE */
+        window.onload = () => {
+            loadUserLocation();
+            checkAlerts();
+            
+            // Check for new alerts every 30 seconds
+            setInterval(checkAlerts, 30000);
+        };
+    </script>
+</body>
+</html>

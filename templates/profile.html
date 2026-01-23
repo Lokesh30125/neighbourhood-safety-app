@@ -1,0 +1,282 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My Profile - Neighbourhood Safety App</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #1a5276 0%, #2874a6 100%);
+            color: white;
+            padding: 20px;
+            text-align: center;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+        }
+
+        .header h3 {
+            font-size: 24px;
+            font-weight: 700;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.2);
+        }
+
+        .box {
+            background: white;
+            max-width: 550px;
+            margin: 30px auto;
+            padding: 35px;
+            border-radius: 16px;
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
+            animation: slideUp 0.5s ease-out;
+        }
+
+        @keyframes slideUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .section-title {
+            font-size: 16px;
+            font-weight: 700;
+            margin: 25px 0 15px;
+            color: #1a5276;
+            padding-bottom: 8px;
+            border-bottom: 2px solid #e0e0e0;
+        }
+
+        .profile-center {
+            text-align: center;
+            margin-bottom: 25px;
+        }
+
+        .profile-pic {
+            width: 120px;
+            height: 120px;
+            border-radius: 50%;
+            object-fit: cover;
+            image-rendering: -webkit-optimize-contrast;
+            image-rendering: crisp-edges;
+            border: 4px solid #1a5276;
+            background-color: #fff;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+            transition: all 0.3s ease;
+            transform: translateZ(0);
+        }
+
+        .profile-pic:hover {
+            transform: scale(1.05);
+            box-shadow: 0 6px 16px rgba(0, 0, 0, 0.2);
+        }
+
+        .file-input-wrapper {
+            margin-top: 15px;
+            display: inline-block;
+        }
+
+        label {
+            display: block;
+            font-size: 14px;
+            margin-top: 15px;
+            color: #444;
+            font-weight: 600;
+        }
+
+        input[type="text"],
+        input[type="tel"] {
+            width: 100%;
+            padding: 12px;
+            margin-top: 6px;
+            border-radius: 8px;
+            border: 2px solid #e0e0e0;
+            font-size: 15px;
+            transition: all 0.3s ease;
+            font-family: inherit;
+        }
+
+        input:focus {
+            outline: none;
+            border-color: #1a5276;
+            box-shadow: 0 0 0 3px rgba(26, 82, 118, 0.1);
+        }
+
+        input[type="file"] {
+            width: 100%;
+            padding: 10px;
+            margin-top: 10px;
+            border: 2px dashed #1a5276;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        input[type="file"]:hover {
+            background: #f0f8ff;
+        }
+
+        button {
+            width: 100%;
+            padding: 14px;
+            margin-top: 20px;
+            border: none;
+            border-radius: 10px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .save-btn {
+            background: linear-gradient(135deg, #1a5276 0%, #2874a6 100%);
+            color: white;
+            box-shadow: 0 4px 12px rgba(26, 82, 118, 0.3);
+        }
+
+        .save-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 16px rgba(26, 82, 118, 0.4);
+        }
+
+        .back-btn {
+            background: linear-gradient(135deg, #95a5a6 0%, #7f8c8d 100%);
+            color: white;
+            box-shadow: 0 4px 12px rgba(127, 140, 141, 0.3);
+        }
+
+        .back-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 16px rgba(127, 140, 141, 0.4);
+        }
+
+        button:active {
+            transform: translateY(0);
+        }
+
+        .input-hint {
+            font-size: 12px;
+            color: #666;
+            margin-top: 4px;
+            font-style: italic;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .box {
+                margin: 20px;
+                padding: 25px 20px;
+            }
+
+            .profile-pic {
+                width: 100px;
+                height: 100px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h3>👤 My Profile</h3>
+    </div>
+
+    <div class="box">
+        <form action="/update_profile" method="POST" enctype="multipart/form-data">
+            <!-- PROFILE PHOTO -->
+            <div class="profile-center">
+                <img
+                    src="{{ user.photo if user.photo else url_for('static', filename='guest.png') }}"
+                    class="profile-pic"
+                    alt="Profile Photo">
+                <br>
+                <div class="file-input-wrapper">
+                    <label>Change Profile Photo</label>
+                    <input type="file" name="photo" accept="image/*">
+                </div>
+            </div>
+
+            <!-- PERSONAL DETAILS -->
+            <div class="section-title">📝 Personal Details</div>
+
+            <label>First Name *</label>
+            <input type="text" name="firstname" value="{{ user.firstname }}" required>
+
+            <label>Last Name *</label>
+            <input type="text" name="lastname" value="{{ user.lastname }}" required>
+
+            <label>Mobile Number *</label>
+            <input
+                type="tel"
+                name="mobile"
+                value="{{ user.mobile }}"
+                oninput="validateMobile(this)"
+                placeholder="+91XXXXXXXXXX"
+                required>
+            <div class="input-hint">Format: +91XXXXXXXXXX (with country code)</div>
+
+            <!-- LOCATION DETAILS -->
+            <div class="section-title">📍 Location Details</div>
+
+            <label>State</label>
+            <input type="text" name="state" value="{{ user.state }}" placeholder="Enter your state">
+
+            <label>District</label>
+            <input type="text" name="district" value="{{ user.district }}" placeholder="Enter your district">
+
+            <label>Village/City</label>
+            <input type="text" name="village" value="{{ user.village }}" placeholder="Enter your village or city">
+
+            <button type="submit" class="save-btn">💾 Save Changes</button>
+        </form>
+
+        <button type="button" class="back-btn" onclick="window.location='/dashboard'">
+            ⬅ Back to Dashboard
+        </button>
+    </div>
+
+    <script>
+        function validateMobile(input) {
+            const value = input.value.trim();
+            // Allow + and digits only, 10-15 digits after country code
+            const pattern = /^\+\d{10,15}$/;
+
+            if (value && !pattern.test(value)) {
+                input.style.borderColor = "#e74c3c";
+                input.setCustomValidity(
+                    "Enter a valid mobile number with country code (e.g. +91XXXXXXXXXX)"
+                );
+            } else {
+                input.style.borderColor = "#27ae60";
+                input.setCustomValidity("");
+            }
+        }
+
+        // Prevent form submission if validation fails
+        document.querySelector('form').addEventListener('submit', function(e) {
+            const mobileInput = document.querySelector('input[name="mobile"]');
+            const value = mobileInput.value.trim();
+            const pattern = /^\+\d{10,15}$/;
+
+            if (!pattern.test(value)) {
+                e.preventDefault();
+                alert("Please enter a valid mobile number with country code (e.g. +91XXXXXXXXXX)");
+                mobileInput.focus();
+            }
+        });
+    </script>
+</body>
+</html>

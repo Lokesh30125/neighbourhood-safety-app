@@ -1,0 +1,482 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>View Photos - Neighbourhood Safety App</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #1a5276 0%, #2874a6 100%);
+            color: white;
+            padding: 20px;
+            text-align: center;
+            font-size: 24px;
+            font-weight: 700;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.2);
+        }
+
+        .feed {
+            padding: 20px;
+            max-width: 600px;
+            margin: 0 auto;
+        }
+
+        .card {
+            background: white;
+            border-radius: 16px;
+            padding: 20px;
+            margin: 20px 0;
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
+            animation: slideUp 0.5s ease-out;
+        }
+
+        @keyframes slideUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .top {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 15px;
+        }
+
+        .profile {
+            width: 45px;
+            height: 45px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #1a5276, #2874a6);
+            overflow: hidden;
+            border: 3px solid #e0e0e0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: bold;
+            font-size: 18px;
+        }
+
+        .profile img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .info {
+            flex: 1;
+        }
+
+        .info b {
+            display: block;
+            font-size: 16px;
+            color: #333;
+            margin-bottom: 3px;
+        }
+
+        .info span {
+            font-size: 13px;
+            color: #777;
+        }
+
+        .time {
+            font-size: 13px;
+            font-weight: 600;
+            color: #666;
+        }
+
+        .image {
+            width: 100%;
+            max-width: 100%;
+            height: auto;
+            object-fit: cover;
+            border-radius: 12px;
+            margin: 15px 0;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+        }
+
+        .desc {
+            font-size: 15px;
+            margin: 15px 0;
+            color: #555;
+            line-height: 1.6;
+        }
+
+        .comment-box {
+            margin-top: 15px;
+            padding: 15px;
+            background: #f8f9fa;
+            border-radius: 10px;
+            display: none;
+        }
+
+        .comment-box textarea {
+            width: 100%;
+            height: 80px;
+            resize: vertical;
+            padding: 10px;
+            font-size: 14px;
+            border-radius: 8px;
+            border: 2px solid #e0e0e0;
+            font-family: inherit;
+            transition: all 0.3s ease;
+        }
+
+        .comment-box textarea:focus {
+            outline: none;
+            border-color: #1a5276;
+        }
+
+        .comment-box button {
+            margin-top: 10px;
+            padding: 10px 20px;
+            background: #1a5276;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+
+        .comment-box button:hover {
+            background: #2874a6;
+        }
+
+        .actions {
+            display: flex;
+            justify-content: flex-end;
+            gap: 10px;
+            margin-top: 15px;
+        }
+
+        .actions button {
+            padding: 10px 18px;
+            border: none;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .comment {
+            background: #e0e0e0;
+            color: #333;
+        }
+
+        .comment:hover {
+            background: #d0d0d0;
+        }
+
+        .share {
+            background: linear-gradient(135deg, #1a5276 0%, #2874a6 100%);
+            color: white;
+            box-shadow: 0 4px 12px rgba(26, 82, 118, 0.3);
+        }
+
+        .share:hover {
+            box-shadow: 0 6px 16px rgba(26, 82, 118, 0.4);
+            transform: translateY(-2px);
+        }
+
+        .posted-comments {
+            margin-top: 15px;
+            padding: 12px;
+            background: #f0f8ff;
+            border-radius: 8px;
+            border-left: 4px solid #1a5276;
+        }
+
+        .posted-comments.empty {
+            display: none;
+        }
+
+        .comment-item {
+            background: white;
+            padding: 12px;
+            margin-bottom: 10px;
+            border-radius: 8px;
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        .comment-item:last-child {
+            margin-bottom: 0;
+        }
+
+        .comment-header {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 6px;
+        }
+
+        .comment-author {
+            font-weight: 700;
+            color: #1a5276;
+            font-size: 14px;
+        }
+
+        .comment-time {
+            font-size: 12px;
+            color: #999;
+        }
+
+        .comment-text {
+            font-size: 14px;
+            color: #333;
+            line-height: 1.5;
+        }
+
+        .comments-title {
+            font-weight: 700;
+            color: #1a5276;
+            margin-bottom: 10px;
+            font-size: 15px;
+        }
+
+        .empty-state {
+            text-align: center;
+            color: #fff;
+            padding: 40px;
+            font-size: 18px;
+        }
+
+        .back-btn {
+            width: 100%;
+            background: linear-gradient(135deg, #95a5a6 0%, #7f8c8d 100%);
+            color: white;
+            border: none;
+            padding: 14px;
+            border-radius: 10px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 12px rgba(127, 140, 141, 0.3);
+            margin: 20px auto;
+            max-width: 600px;
+            display: block;
+        }
+
+        .back-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 16px rgba(127, 140, 141, 0.4);
+        }
+
+        @media (max-width: 768px) {
+            .feed {
+                padding: 15px;
+            }
+
+            .card {
+                padding: 15px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="header">🖼️ Incident Photos</div>
+    <div class="feed" id="feed"></div>
+    <button class="back-btn" onclick="window.location='/dashboard'">← Back to Dashboard</button>
+
+    <script>
+        const place = localStorage.getItem("placeName");
+
+        // Fetch current user info
+        fetch("/current_user")
+            .then(res => res.json())
+            .then(currentUser => {
+                const currentUsername = currentUser.username || "Unknown";
+
+                // Fetch all photos and incidents
+                fetch("/photos/" + encodeURIComponent(place))
+                    .then(res => res.json())
+                    .then(data => {
+                        const feed = document.getElementById("feed");
+                        feed.innerHTML = "";
+
+                        if (data.length === 0) {
+                            feed.innerHTML = "<div class='empty-state'>🔭 No photos found</div>";
+                            return;
+                        }
+
+                        data.forEach((incident, index) => {
+                            const cardId = `incident-${incident.id || index}`;
+                            
+                            // Get poster's info from incident data
+                            const posterUsername = incident.username || "Anonymous";
+                            const posterPhoto = incident.user_photo || "";
+                            const posterLocation = incident.place || "Unknown location";
+                            
+                            // Create profile initial if no photo
+                            const profileInitial = posterUsername.charAt(0).toUpperCase();
+
+                            // Create card HTML
+                            let cardHTML = `
+                                <div class="card">
+                                    <div class="top">
+                                        <div class="profile">
+                                            ${posterPhoto ? `<img src="${posterPhoto}" alt="Profile">` : profileInitial}
+                                        </div>
+                                        <div class="info">
+                                            <b>${posterUsername}</b>
+                                            <span>📍 ${posterLocation}</span>
+                                        </div>
+                                        <div class="time">
+                                            ${formatDateTime(incident.time)}
+                                        </div>
+                                    </div>
+
+                                    <img src="${incident.image}" class="image" alt="Incident">
+
+                                <div class="desc">
+                                        ${incident.description || "No description provided"}
+                                    </div>
+
+                                    <div class="comment-box" id="comment-${cardId}">
+                                        <textarea placeholder="Write a comment..." id="textarea-${cardId}"></textarea>
+                                        <button onclick="postComment('${cardId}', ${incident.id || index})">Post Comment</button>
+                                    </div>
+
+                                    <div class="posted-comments ${incident.comments && incident.comments.length > 0 ? '' : 'empty'}" id="posted-${cardId}">
+                            `;
+
+                            // Add existing comments
+                            if (incident.comments && incident.comments.length > 0) {
+                                cardHTML += '<div class="comments-title">💬 Comments</div>';
+                                incident.comments.forEach(comment => {
+                                    cardHTML += `
+                                        <div class="comment-item">
+                                            <div class="comment-header">
+                                                <span class="comment-author">${comment.username || "Anonymous"}</span>
+                                                <span class="comment-time">• ${formatCommentTime(comment.time)}</span>
+                                            </div>
+                                            <div class="comment-text">${comment.text}</div>
+                                        </div>
+                                    `;
+                                });
+                            }
+
+                            cardHTML += `
+                                    </div>
+
+                                    <div class="actions">
+                                        <button class="comment" onclick="toggleComment('${cardId}')">💬 Comment</button>
+                                        <button class="share" onclick="sharePhoto()">📤 Share</button>
+                                    </div>
+                                </div>
+                            `;
+
+                            feed.innerHTML += cardHTML;
+                        });
+                    })
+                    .catch(error => {
+                        const feed = document.getElementById("feed");
+                        feed.innerHTML = "<div class='empty-state'>⚠️ Error loading photos</div>";
+                    });
+            });
+
+        function formatDateTime(timeStr) {
+            if (!timeStr) return "Unknown time";
+            const date = new Date(timeStr.replace(" ", "T"));
+            const day = date.getDate();
+            const month = date.toLocaleString("en-US", { month: "short" });
+            const year = date.getFullYear();
+            let hours = date.getHours();
+            const minutes = date.getMinutes().toString().padStart(2, "0");
+            const ampm = hours >= 12 ? "PM" : "AM";
+            hours = hours % 12 || 12;
+            return `${day} ${month} ${year} • ${hours}:${minutes} ${ampm}`;
+        }
+
+        function formatCommentTime(timeStr) {
+            if (!timeStr) return "Just now";
+            const date = new Date(timeStr.replace(" ", "T"));
+            const now = new Date();
+            const diffMs = now - date;
+            const diffMins = Math.floor(diffMs / 60000);
+
+            if (diffMins < 1) return "Just now";
+            if (diffMins < 60) return `${diffMins}m ago`;
+            const diffHours = Math.floor(diffMins / 60);
+            if (diffHours < 24) return `${diffHours}h ago`;
+            const diffDays = Math.floor(diffHours / 24);
+            if (diffDays < 7) return `${diffDays}d ago`;
+            return formatDateTime(timeStr);
+        }
+
+        function toggleComment(id) {
+            const box = document.getElementById("comment-" + id);
+            const isHidden = window.getComputedStyle(box).display === "none";
+            box.style.display = isHidden ? "block" : "none";
+        }
+
+        function postComment(cardId, incidentId) {
+            const textarea = document.getElementById("textarea-" + cardId);
+            const text = textarea.value.trim();
+
+            if (!text) {
+                alert("Please write a comment");
+                return;
+            }
+
+            // Send comment to server
+            fetch("/add_comment", {
+                method: "POST",
+                headers: {"Content-Type": "application/json"},
+                body: JSON.stringify({
+                    incident_id: incidentId,
+                    comment_text: text
+                })
+            })
+            .then(res => res.json())
+            .then(data => {
+                if (data.success) {
+                    // Reload the page to show the new comment
+                    location.reload();
+                } else {
+                    alert("Failed to post comment");
+                }
+            })
+            .catch(error => {
+                alert("Error posting comment: " + error.message);
+            });
+        }
+
+        function sharePhoto() {
+            const url = window.location.href;
+
+            if (navigator.share) {
+                navigator.share({
+                    title: "Incident Photo",
+                    text: "Check out this incident photo from our neighbourhood",
+                    url: url
+                }).catch(() => {});
+            } else {
+                navigator.clipboard.writeText(url);
+                alert("✅ Link copied to clipboard!");
+            }
+        }
+    </script>
+</body>
+</html>

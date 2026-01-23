@@ -1,0 +1,413 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Report Incident - Neighbourhood Safety App</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            text-align: center;
+        }
+
+        header {
+            background: linear-gradient(135deg, #1a5276 0%, #2874a6 100%);
+            color: white;
+            padding: 20px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+        }
+
+        header h3 {
+            font-size: 24px;
+            font-weight: 700;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.2);
+        }
+
+        .box {
+            background: white;
+            margin: 30px auto;
+            padding: 35px;
+            width: 90%;
+            max-width: 550px;
+            border-radius: 16px;
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
+            animation: slideUp 0.5s ease-out;
+        }
+
+        @keyframes slideUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        #placeText {
+            background: #e3f2fd;
+            padding: 12px;
+            border-radius: 8px;
+            color: #1976d2;
+            font-weight: 600;
+            margin-bottom: 20px;
+        }
+
+        button {
+            width: 100%;
+            padding: 14px 24px;
+            border-radius: 10px;
+            border: none;
+            background: linear-gradient(135deg, #1a5276 0%, #2874a6 100%);
+            color: white;
+            margin-top: 15px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 12px rgba(26, 82, 118, 0.3);
+        }
+
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 16px rgba(26, 82, 118, 0.4);
+        }
+
+        button:active {
+            transform: translateY(0);
+        }
+
+        video, img {
+            width: 100%;
+            max-width: 500px;
+            border-radius: 12px;
+            margin-top: 15px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        }
+
+        canvas {
+            display: none;
+        }
+
+        textarea {
+            width: 100%;
+            margin-top: 15px;
+            padding: 12px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-family: inherit;
+            font-size: 14px;
+            resize: vertical;
+            min-height: 100px;
+            transition: border-color 0.3s ease;
+        }
+
+        textarea:focus {
+            outline: none;
+            border-color: #1a5276;
+        }
+
+        h4 {
+            color: #1a5276;
+            margin-top: 30px;
+            margin-bottom: 15px;
+            font-size: 20px;
+            font-weight: 700;
+        }
+
+        #incidentList {
+            text-align: left;
+            margin-top: 20px;
+        }
+
+        .incident-card {
+            background: #f8f9fa;
+            border-radius: 12px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            padding: 15px;
+            margin-bottom: 20px;
+            transition: all 0.3s ease;
+        }
+
+        .incident-card:hover {
+            box-shadow: 0 6px 16px rgba(0, 0, 0, 0.15);
+            transform: translateY(-2px);
+        }
+
+        .incident-header {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 12px;
+        }
+
+        .profile {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #1a5276, #2874a6);
+        }
+
+        .incident-info {
+            flex: 1;
+        }
+
+        .incident-info b {
+            display: block;
+            color: #333;
+            font-size: 15px;
+        }
+
+        .time {
+            font-size: 12px;
+            color: #777;
+        }
+
+        .incident-img {
+            width: 100%;
+            border-radius: 10px;
+            margin-top: 12px;
+        }
+
+        .actions {
+            display: flex;
+            justify-content: flex-end;
+            gap: 10px;
+            margin-top: 12px;
+        }
+
+        .actions button {
+            width: auto;
+            padding: 8px 16px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 14px;
+            margin-top: 0;
+        }
+
+        .btn-view {
+            background: linear-gradient(135deg, #2980b9 0%, #1f5f8b 100%);
+        }
+
+        .btn-back {
+            background: linear-gradient(135deg, #e74c3c 0%, #c0392b 100%);
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .box {
+                margin: 20px;
+                padding: 25px 20px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <h3>🚨 Report Incident</h3>
+    </header>
+
+    <div class="box">
+        <p id="placeText">📍 Resolving location…</p>
+
+        <button onclick="openCamera()">📸 Take Photo</button>
+
+        <video id="video" autoplay style="display:none;"></video>
+        <canvas id="canvas"></canvas>
+        <img id="photo" style="display:none;">
+
+        <button id="captureBtn" onclick="capturePhoto()" style="display:none;">
+            📷 Capture Photo
+        </button>
+
+        <textarea id="problemText"
+            placeholder="Describe the problem (optional)"
+            style="display:none;"></textarea>
+
+        <button id="submitBtn"
+            onclick="submitIncident()"
+            style="display:none;">
+            📤 Submit Report
+        </button>
+
+        <h4>📢 Neighbourhood Reports</h4>
+        <div id="incidentList"></div>
+
+        <button class="btn-view" onclick="openViewPhotos()">
+            🖼️ View All Photos
+        </button>
+
+        <button class="btn-back" onclick="history.back()">
+            ⬅ Back to Dashboard
+        </button>
+    </div>
+
+    <script>
+        let stream;
+        let currentLat = null;
+        let currentLon = null;
+
+        const FIXED_LATITUDE = 16.2541;
+        const FIXED_LONGITUDE = 80.325368;
+
+        window.onload = function() {
+            detectUserLocation();
+            loadFixedLocation();
+        };
+
+        function detectUserLocation() {
+            if (!navigator.geolocation) {
+                console.warn("Geolocation not supported");
+                return;
+            }
+
+            navigator.geolocation.getCurrentPosition(
+                function(position) {
+                    currentLat = position.coords.latitude;
+                    currentLon = position.coords.longitude;
+                    console.log("GPS detected:", currentLat, currentLon);
+                },
+                function() {
+                    console.warn("User denied GPS access");
+                },
+                {
+                    enableHighAccuracy: true
+                }
+            );
+        }
+
+        function loadFixedLocation() {
+            const lat = 16.48435028;
+            const lon = 80.69236481;
+
+            document.getElementById("placeText").innerText = "📍 Detecting location…";
+
+            fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lon}`)
+                .then(res => res.json())
+                .then(data => {
+                    const address = data.address || {};
+                    const placeKey =
+                        (address.village || address.town || address.city || "") + ", " +
+                        (address.district || address.county || "") + ", " +
+                        (address.state || "");
+
+                    localStorage.setItem("placeName", placeKey);
+                    document.getElementById("placeText").innerText = "📍 Location: " + placeKey;
+                    loadIncidents(placeKey);
+                })
+                .catch(error => {
+                    document.getElementById("placeText").innerText = "📍 Location unavailable";
+                });
+        }
+
+        function openCamera() {
+            navigator.mediaDevices.getUserMedia({ video: true })
+                .then(s => {
+                    stream = s;
+                    const video = document.getElementById("video");
+                    const captureBtn = document.getElementById("captureBtn");
+                    video.style.display = "block";
+                    captureBtn.style.display = "block";
+                    video.srcObject = stream;
+                })
+                .catch(error => {
+                    alert("Camera access denied: " + error.message);
+                });
+        }
+
+        function capturePhoto() {
+            const video = document.getElementById("video");
+            const canvas = document.getElementById("canvas");
+            const photo = document.getElementById("photo");
+            const captureBtn = document.getElementById("captureBtn");
+            const problemText = document.getElementById("problemText");
+            const submitBtn = document.getElementById("submitBtn");
+
+            canvas.width = video.videoWidth;
+            canvas.height = video.videoHeight;
+            canvas.getContext("2d").drawImage(video, 0, 0);
+
+            photo.src = canvas.toDataURL("image/png");
+            photo.style.display = "block";
+
+            if (stream) {
+                stream.getTracks().forEach(track => track.stop());
+            }
+
+            video.style.display = "none";
+            captureBtn.style.display = "none";
+            problemText.style.display = "block";
+            submitBtn.style.display = "block";
+        }
+
+        function submitIncident() {
+            const photo = document.getElementById("photo");
+            const problemText = document.getElementById("problemText");
+            const submitBtn = document.getElementById("submitBtn");
+
+            fetch("/report", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    image: photo.src,
+                    description: problemText.value,
+                    place: localStorage.getItem("placeName"),
+                    latitude: currentLat,
+                    longitude: currentLon
+                })
+            }).then(() => {
+                problemText.value = "";
+                problemText.style.display = "none";
+                submitBtn.style.display = "none";
+                photo.src = "";
+                photo.style.display = "none";
+                loadIncidents(localStorage.getItem("placeName"));
+                alert("✅ Report submitted successfully!");
+            }).catch(error => {
+                alert("❌ Failed to submit report: " + error.message);
+            });
+        }
+
+        function loadIncidents(place) {
+            fetch(`/incidents/${place}`)
+                .then(res => res.json())
+                .then(data => {
+                    const incidentList = document.getElementById("incidentList");
+                    incidentList.innerHTML = "";
+                    data.forEach(i => {
+                        incidentList.innerHTML += `
+                            <div class="incident-card">
+                                <div class="incident-header">
+                                    <div class="profile"></div>
+                                    <div class="incident-info">
+                                        <b>${i.username || "Anonymous"}</b>
+                                        <span class="time">📅 ${i.time || ""}</span>
+                                    </div>
+                                </div>
+                                <img src="${i.image}" class="incident-img">
+                                <p style="margin-top:12px; color:#555;">${i.description || "No description"}</p>
+                            </div>
+                        `;
+                    });
+                })
+                .catch(error => {
+                    console.error("Failed to load incidents:", error);
+                });
+        }
+
+        function openViewPhotos() {
+            window.location = "/view_photos";
+        }
+    </script>
+</body>
+</html>

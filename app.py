@@ -1,9 +1,9 @@
-from flask import Flask, render_template, request, redirect, session, jsonify, url_for
+from flask import Flask, render_template, request, redirect, session, jsonify, url_for, send_from_directory
 import sqlite3
 import os
 from datetime import datetime
-import random
 import secrets
+import base64
 
 app = Flask(__name__)
 
@@ -14,6 +14,9 @@ app.secret_key = os.environ.get('SECRET_KEY', secrets.token_hex(32))
 UPLOAD_FOLDER = 'static/uploads'
 if not os.path.exists(UPLOAD_FOLDER):
     os.makedirs(UPLOAD_FOLDER)
+
+app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
+app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024  # 16MB max file size
 
 # Database path
 DATABASE = os.environ.get('DATABASE_PATH', 'safety.db')
@@ -74,21 +77,17 @@ def init_database():
         )
     """)
     
-    # Create OTP table
-    c.execute("""
-        CREATE TABLE IF NOT EXISTS otp_storage (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            mobile TEXT NOT NULL,
-            otp TEXT NOT NULL,
-            created_at TEXT NOT NULL
-        )
-    """)
-    
     conn.commit()
     conn.close()
 
 # Initialize database on startup
 init_database()
+
+# Static file serving route (explicit for production)
+@app.route('/static/uploads/<path:filename>')
+def uploaded_file(filename):
+    """Serve uploaded files"""
+    return send_from_directory(app.config['UPLOAD_FOLDER'], filename)
 
 # Routes
 @app.route("/")
@@ -137,124 +136,44 @@ def register():
         if 'photo' in request.files:
             photo = request.files['photo']
             if photo and photo.filename:
+                # Create safe filename
                 filename = f"{username}_{datetime.now().strftime('%Y%m%d%H%M%S')}.jpg"
-                photo_path = os.path.join(UPLOAD_FOLDER, filename)
-                photo.save(photo_path)
+                file_path = os.path.join(app.config['UPLOAD_FOLDER'], filename)
+                photo.save(file_path)
+                # Store relative URL path
                 photo_path = f"/static/uploads/{filename}"
         
-        # Generate OTP
-        otp = str(random.randint(1000, 9999))
-        
-        # Store user data in session temporarily
-        session['temp_user'] = {
-            'firstname': firstname,
-            'lastname': lastname,
-            'mobile': mobile,
-            'state': 'Andhra Pradesh',
-            'district': district,
-            'village': village,
-            'username': username,
-            'password': password,
-            'photo': photo_path,
-            'country': country
-        }
-        
-        # Store OTP
+        # Create user directly without OTP
         conn = get_db_connection()
         c = conn.cursor()
-        c.execute("INSERT INTO otp_storage (mobile, otp, created_at) VALUES (?, ?, ?)",
-                  (mobile, otp, datetime.now().strftime("%Y-%m-%d %H:%M:%S")))
-        conn.commit()
-        conn.close()
         
-        # In production, send OTP via SMS
-        print(f"OTP for {mobile}: {otp}")
-        
-        return jsonify({"success": True, "otp_required": True, "message": f"OTP sent to {mobile}"})
-    
-    except Exception as e:
-        print(f"Registration error: {e}")
-        return jsonify({"success": False, "message": str(e)}), 500
-
-@app.route("/otp")
-def otp_page():
-    return render_template("otp.html")
-
-@app.route("/verify_otp", methods=["POST"])
-def verify_otp():
-    try:
-        data = request.json
-        entered_otp = data.get("otp")
-        
-        if 'temp_user' not in session:
-            return jsonify({"success": False, "message": "Session expired"}), 400
-        
-        temp_user = session['temp_user']
-        mobile = temp_user['mobile']
-        
-        # Verify OTP
-        conn = get_db_connection()
-        c = conn.cursor()
-        c.execute("SELECT otp FROM otp_storage WHERE mobile = ? ORDER BY created_at DESC LIMIT 1", (mobile,))
-        stored_otp = c.fetchone()
-        
-        if stored_otp and stored_otp[0] == entered_otp:
-            # OTP is correct, create user
+        try:
             c.execute("""
                 INSERT INTO users (username, password, firstname, lastname, mobile, state, district, village, photo, country)
                 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             """, (
-                temp_user['username'],
-                temp_user['password'],
-                temp_user['firstname'],
-                temp_user['lastname'],
-                temp_user['mobile'],
-                temp_user['state'],
-                temp_user['district'],
-                temp_user['village'],
-                temp_user['photo'],
-                temp_user['country']
+                username,
+                password,
+                firstname,
+                lastname,
+                mobile,
+                'Andhra Pradesh',
+                district,
+                village,
+                photo_path,
+                country
             ))
             conn.commit()
-            
-            # Clean up
-            c.execute("DELETE FROM otp_storage WHERE mobile = ?", (mobile,))
-            conn.commit()
             conn.close()
-            
-            # Clear temp session
-            session.pop('temp_user', None)
             
             return jsonify({"success": True, "message": "Registration successful"})
-        else:
+        
+        except sqlite3.IntegrityError:
             conn.close()
-            return jsonify({"success": False, "message": "Invalid OTP"}), 400
+            return jsonify({"success": False, "message": "Username already exists"}), 400
     
     except Exception as e:
-        print(f"OTP verification error: {e}")
-        return jsonify({"success": False, "message": str(e)}), 500
-
-@app.route("/resend_otp", methods=["POST"])
-def resend_otp():
-    try:
-        if 'temp_user' not in session:
-            return jsonify({"success": False, "message": "Session expired"}), 400
-        
-        mobile = session['temp_user']['mobile']
-        otp = str(random.randint(1000, 9999))
-        
-        conn = get_db_connection()
-        c = conn.cursor()
-        c.execute("INSERT INTO otp_storage (mobile, otp, created_at) VALUES (?, ?, ?)",
-                  (mobile, otp, datetime.now().strftime("%Y-%m-%d %H:%M:%S")))
-        conn.commit()
-        conn.close()
-        
-        print(f"Resent OTP for {mobile}: {otp}")
-        
-        return jsonify({"success": True, "message": "OTP resent"})
-    
-    except Exception as e:
+        print(f"Registration error: {e}")
         return jsonify({"success": False, "message": str(e)}), 500
 
 @app.route("/dashboard")
@@ -321,8 +240,8 @@ def update_profile():
         photo = request.files['photo']
         if photo and photo.filename:
             filename = f"{username}_{datetime.now().strftime('%Y%m%d%H%M%S')}.jpg"
-            photo_path = os.path.join(UPLOAD_FOLDER, filename)
-            photo.save(photo_path)
+            file_path = os.path.join(app.config['UPLOAD_FOLDER'], filename)
+            photo.save(file_path)
             photo_path = f"/static/uploads/{filename}"
     
     conn = get_db_connection()
@@ -355,18 +274,39 @@ def report():
         try:
             data = request.json
             username = session['username']
-            image = data.get("image")
+            
+            # Handle base64 image data
+            image_data = data.get("image")
             description = data.get("description", "")
             place = data.get("place", "Unknown")
             latitude = data.get("latitude")
             longitude = data.get("longitude")
+            
+            # Save base64 image to file
+            if image_data and image_data.startswith('data:image'):
+                # Extract base64 data
+                image_data = image_data.split(',')[1]
+                image_bytes = base64.b64decode(image_data)
+                
+                # Create filename
+                filename = f"incident_{username}_{datetime.now().strftime('%Y%m%d%H%M%S')}.jpg"
+                file_path = os.path.join(app.config['UPLOAD_FOLDER'], filename)
+                
+                # Save image
+                with open(file_path, 'wb') as f:
+                    f.write(image_bytes)
+                
+                # Store relative URL path
+                image_url = f"/static/uploads/{filename}"
+            else:
+                image_url = image_data  # Use as-is if already a URL
             
             conn = get_db_connection()
             c = conn.cursor()
             c.execute("""
                 INSERT INTO incidents (username, image, description, place, latitude, longitude, time)
                 VALUES (?, ?, ?, ?, ?, ?, ?)
-            """, (username, image, description, place, latitude, longitude, datetime.now().strftime("%Y-%m-%d %H:%M:%S")))
+            """, (username, image_url, description, place, latitude, longitude, datetime.now().strftime("%Y-%m-%d %H:%M:%S")))
             conn.commit()
             conn.close()
             
@@ -384,7 +324,7 @@ def get_incidents(place):
         conn = get_db_connection()
         c = conn.cursor()
         c.execute("""
-            SELECT id, username, image, description, time, place
+            SELECT id, username, image, description, time, place, latitude, longitude
             FROM incidents
             WHERE place = ?
             ORDER BY time DESC
@@ -395,10 +335,12 @@ def get_incidents(place):
             incidents.append({
                 "id": row[0],
                 "username": row[1],
-                "image": row[2],
+                "image": row[2],  # This is already a URL path
                 "description": row[3],
                 "time": row[4],
-                "place": row[5]
+                "place": row[5],
+                "latitude": row[6],
+                "longitude": row[7]
             })
         
         conn.close()
@@ -436,13 +378,13 @@ def get_all_incidents():
             incidents.append({
                 "id": row[0],
                 "username": row[1],
-                "image": row[2],
+                "image": row[2],  # Already a URL path
                 "description": row[3],
                 "time": row[4],
                 "place": row[5],
                 "latitude": row[6],
                 "longitude": row[7],
-                "user_photo": row[8]
+                "user_photo": row[8]  # Already a URL path
             })
         
         conn.close()
@@ -472,7 +414,7 @@ def recent_incidents():
             incidents.append({
                 "id": row[0],
                 "username": row[1],
-                "image": row[2],
+                "image": row[2],  # Already a URL path
                 "description": row[3],
                 "time": row[4],
                 "place": row[5]
@@ -532,12 +474,12 @@ def get_photos(place):
             
             incidents.append({
                 "id": incident_id,
-                "image": image,
+                "image": image,  # Already a URL path
                 "description": desc,
                 "time": time,
                 "place": place,
                 "username": username,
-                "user_photo": user_photo,
+                "user_photo": user_photo,  # Already a URL path
                 "comments": comments
             })
         
@@ -595,7 +537,7 @@ def get_current_user():
         if user:
             return jsonify({
                 "username": user[0],
-                "photo": user[1]
+                "photo": user[1]  # Already a URL path
             })
         else:
             return jsonify({"username": None})
@@ -664,7 +606,6 @@ def reset_database():
         c.execute("DROP TABLE IF EXISTS users")
         c.execute("DROP TABLE IF EXISTS incidents")
         c.execute("DROP TABLE IF EXISTS comments")
-        c.execute("DROP TABLE IF EXISTS otp_storage")
         
         conn.commit()
         conn.close()

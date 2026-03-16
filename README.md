@@ -287,11 +287,7 @@ Once deployed, your app will be available at:
 
 This project is for educational purposes.
 
-## 👥 Admin Access
 
-Reset Database Password: `9012`
-
----
 
 ## 🔄 Updates
 
